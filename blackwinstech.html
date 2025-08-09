@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 4-Relay Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        margin: 0;
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    h1 {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .relay-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        width: 100%;
+        max-width: 900px;
+    }
+    .relay-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .relay-name {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+    }
+    .toggle {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    .toggle input {
+        display: none;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #00c853;
+    }
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+</style>
+</head>
+<body>
+
+<h1>ESP32 4-Relay Control Panel</h1>
+<div class="relay-container">
+    <div class="relay-card">
+        <div class="relay-name">Relay 1</div>
+        <label class="toggle">
+            <input type="checkbox" id="relay1">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="relay-card">
+        <div class="relay-name">Relay 2</div>
+        <label class="toggle">
+            <input type="checkbox" id="relay2">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="relay-card">
+        <div class="relay-name">Relay 3</div>
+        <label class="toggle">
+            <input type="checkbox" id="relay3">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="relay-card">
+        <div class="relay-name">Relay 4</div>
+        <label class="toggle">
+            <input type="checkbox" id="relay4">
+            <span class="slider"></span>
+        </label>
+    </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+    const firebaseConfig = {
+        databaseURL: "https://smartchargerapp-3ae91-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const AUTH_SECRET = "zc6g5VFqarkTyQq4gMUPO5qkiGvwzRTmjoZvO2IX";
+
+    const relays = ["relay1", "relay2", "relay3", "relay4"];
+
+    relays.forEach((relay) => {
+        const checkbox = document.getElementById(relay);
+        db.ref(relay + "/state?auth=" + AUTH_SECRET).on("value", snap => {
+            checkbox.checked = snap.val();
+        });
+        checkbox.addEventListener("change", () => {
+            fetch(`${firebaseConfig.databaseURL}/${relay}.json?auth=${AUTH_SECRET}`, {
+                method: "PUT",
+                body: JSON.stringify({ state: checkbox.checked })
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
